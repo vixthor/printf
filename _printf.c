@@ -1,41 +1,67 @@
 #include "main.h"
-/**
- * _printf - prints out a string
- * @format: the string
- * Return: 0
- */
 
+void print_buffer(char buffer[], int *buff_ind);
+
+/**
+ * _printf - Printf function
+ * @format: format.
+ * Return: Printed chars.
+ */
 int _printf(const char *format, ...)
 {
-	char *first_a;
-	int unsigned i;
-	char *s;
+	int i, printed = 0, printed_chars = 0;
+	int flags, width, precision, size, buff_ind = 0;
+	va_list list;
+	char buffer[BUFF_SIZE];
 
-	va_list arg;
-	va_start(arg, format);
+	if (format == NULL)
+		return (-1);
 
-	for (first_a = format; *first_a != '\0'; first_a++)
+	va_start(list, format);
+
+	for (i = 0; format && format[i] != '\0'; i++)
 	{
-		while (*first_a != '%')
+		if (format[i] != '%')
 		{
-			_putchar(*first_a);
-			first_a++;
+			buffer[buff_ind++] = format[i];
+			if (buff_ind == BUFF_SIZE)
+				print_buffer(buffer, &buff_ind);
+			/* write(1, &format[i], 1);*/
+			printed_chars++;
 		}
-		first_a++;
-		switch(*first_a)
+		else
 		{
-			case 'c' : i = va_arg(arg,int);
-				   _putchar(i);
-				   break;
-			case 's' : s = va_arg(arg,char *);
-				   _puts(s);
-				   break;
-			case '%' : _putchar('%');
-				   break;
+			print_buffer(buffer, &buff_ind);
+			flags = get_flags(format, &i);
+			width = get_width(format, &i, list);
+			precision = get_precision(format, &i, list);
+			size = get_size(format, &i);
+			++i;
+			printed = handle_print(format, &i, list, buffer,
+				flags, width, precision, size);
+			if (printed == -1)
+				return (-1);
+			printed_chars += printed;
 		}
 	}
-	va_end(arg);
+
+	print_buffer(buffer, &buff_ind);
+
+	va_end(list);
+
+	return (printed_chars);		
+	
 }
 
+/**
+ * print_buffer - Prints the contents of the buffer if it exist
+ * @buffer: Array of chars
+ * @buff_ind: Index at which to add next char, represents the length.
+ */
+void print_buffer(char buffer[], int *buff_ind)
+{
+	if (*buff_ind > 0)
+		write(1, &buffer[0], *buff_ind);
 
+	*buff_ind = 0;
 }
